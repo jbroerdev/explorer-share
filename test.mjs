@@ -6,10 +6,12 @@ import os from 'node:os';
 import path from 'node:path';
 import {zipSync,unzipSync} from 'fflate';
 test('Login, Upload, rekursive Freigabe und Widerruf',async()=>{
+
  process.env.NODE_ENV='test';process.env.DATA_DIR=await mkdtemp(path.join(os.tmpdir(),'explorer-test-'));
  const {server}=await import('./server.mjs');await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let cookie='';
  const request=(url,data,logged=true)=>fetch(base+url,{method:data===undefined?'GET':'POST',headers:{...(logged?{cookie}:{}),'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});
  try{
+ for(const asset of ['/window-manager.js','/photo-geometry.js']){const r=await fetch(base+asset);assert.equal(r.status,200);assert.ok(r.headers.get('content-type').includes('javascript'));}
  assert.equal((await request('/api/folder',{name:'Verboten'},false)).status,401);
  const setup=await request('/api/setup',{username:'admin',password:'test-password-12345'});assert.equal(setup.status,200);cookie=setup.headers.get('set-cookie').split(';')[0];
  await request('/api/folder',{name:'Public'});let data=await(await request('/api/nodes')).json();const folder=data.nodes.find(n=>n.name==='Public');
@@ -29,9 +31,9 @@ test('Login, Upload, rekursive Freigabe und Widerruf',async()=>{
  await request('/api/share',{id:picture.id,shared:true});const preview=await request('/preview/'+picture.id,undefined,false);assert.equal(preview.status,200);assert.equal(preview.headers.get('content-type'),'image/png');
  assert.equal((await request('/preview/'+file.id)).status,415);
  assert.equal((await request('/api/link',{name:'Böse',url:'javascript:alert(1)'})).status,400);
- assert.equal((await request('/api/link',{name:'Website',url:'https://example.com',space:'documents',customIcon:'data:image/png;base64,'+png.toString('base64')})).status,200);
- data=await(await request('/api/nodes')).json();const link=data.nodes.find(n=>n.kind==='link');assert.equal(link.space,'documents');assert.equal(link.url,'https://example.com/');assert.ok(!(await(await request('/api/nodes',undefined,false)).json()).nodes.some(n=>n.id===link.id));
- await request('/api/share',{id:link.id,shared:true});assert.ok((await(await request('/api/nodes',undefined,false)).json()).nodes.some(n=>n.id===link.id));
+ assert.equal((await request('/api/link',{name:'Website',url:'https://example.com',space:'documents',openInWindow:true,appMode:true,customIcon:'data:image/png;base64,'+png.toString('base64')})).status,200);
+ data=await(await request('/api/nodes')).json();const link=data.nodes.find(n=>n.kind==='link');assert.equal(link.space,'documents');assert.equal(link.openInWindow,true);assert.equal(link.appMode,true);assert.equal(link.url,'https://example.com/');assert.ok(!(await(await request('/api/nodes',undefined,false)).json()).nodes.some(n=>n.id===link.id));
+ await request('/api/share',{id:link.id,shared:true});assert.equal((await(await request('/api/nodes',undefined,false)).json()).nodes.find(n=>n.id===link.id).openInWindow,true);assert.equal((await(await request('/api/nodes',undefined,false)).json()).nodes.find(n=>n.id===link.id).appMode,true);await request('/api/link',{id:link.id,name:'Website',url:link.url,customIcon:link.customIcon,openInWindow:false,appMode:true});assert.equal((await(await request('/api/nodes')).json()).nodes.find(n=>n.id===link.id).openInWindow,false);assert.equal((await(await request('/api/nodes')).json()).nodes.find(n=>n.id===link.id).appMode,false);assert.ok((await(await request('/api/nodes',undefined,false)).json()).nodes.some(n=>n.id===link.id));
  assert.equal((await request('/api/profile',{avatar:'/avatars/user.png'})).status,200);assert.equal((await(await request('/api/session')).json()).avatar,'/avatars/user.png');
  const avatar=await fetch(base+'/api/avatar',{method:'POST',headers:{cookie},body:png});assert.equal(avatar.status,200);assert.equal((await request('/avatar',undefined,false)).headers.get('content-type'),'image/png');
  assert.equal((await request('/api/profile',{avatar:'/avatars/../../server.mjs'})).status,400);
