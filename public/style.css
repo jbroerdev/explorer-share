@@ -192,8 +192,17 @@ dialog.desktop-window .desktop-titlebar>button.window-close{border-color:#91503f
 
 .text-app-window{width:min(900px,86vw);height:min(650px,80vh)}
 .editor-source{display:none!important}
-.editor-document-status{margin:0;padding:4px 9px;font-size:11px;color:#536c83;background:#f0f4f8;border-bottom:1px solid #cbd8e4;flex-shrink:0}
+.editor-document-status{display:none}
 #window-snap-preview{position:fixed;pointer-events:none;background:#5aa9e333;border:2px solid #73baf4;box-shadow:inset 0 0 0 1px #e7f5ff,0 0 12px #488bc466;border-radius:4px}
 .desktop-snapped{border-radius:0!important}
 .embedded-app>.link-app-toolbar,.embedded-app>.link-app-hint{display:none}
 #context{z-index:50000}
+/* Compact Windows 7 frame: seven-pixel side rails and a quiet blue caption. */
+dialog.desktop-window,dialog#viewer.desktop-window,dialog#documentviewer.desktop-window,dialog#mediaplayer.desktop-window,dialog.link-app-window.desktop-window{border-color:#263a48;border-radius:5px;background:linear-gradient(to bottom,#9fb7ce 0,#b7cce0 30px,#b9d7ed 30px,#b9d7ed 100%);box-shadow:inset 0 0 0 1px #e8f1f9,0 2px 8px #0003}
+dialog.desktop-window.active-window{border-color:#172c3b;box-shadow:inset 0 0 0 1px #e8f1f9,0 2px 8px #0004}
+dialog.desktop-window::before{border-color:#edf4fa;top:29px}
+.desktop-window .desktop-titlebar{padding-left:3px!important;padding-right:1px!important;gap:3px}
+.desktop-titlebar>img{width:13px;height:13px}
+.desktop-titlebar>span{color:#111;text-shadow:0 1px #dce9f4;font-size:12px}
+dialog.desktop-window .desktop-titlebar>button:is(.window-minimize,.window-maximize,.window-close){margin:5px 0 0!important;border-color:#6c8295!important;box-shadow:inset 0 0 0 1px #edf4fa;background:linear-gradient(#eaf1f8 0,#d1dce7 45%,#b5c6d7 50%,#cfdfed 100%)!important}
+dialog.desktop-window .desktop-titlebar>button.window-close{border-color:#8a4e3d!important;background:linear-gradient(#efb6a5 0,#dc8c74 45%,#c55b3e 50%,#d77a5e 100%)!important}
