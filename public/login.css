@@ -1,0 +1,51 @@
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:'Segoe UI',Tahoma,sans-serif;color:white}body{min-height:100vh;background:#0b477f url('/icons/logon.png') center/cover fixed no-repeat;text-shadow:0 2px 3px #003557}.logon{min-height:calc(100vh - 95px);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:40px 15px}.account{text-align:center;width:310px;max-width:100%}.portrait{display:block;width:135px;height:135px;margin:auto;padding:7px;border-radius:9px;border:1px solid #e0f3ffa0;background:linear-gradient(135deg,#e5f4ffce,#437dab99 50%,#a1d4f7aa);box-shadow:0 0 0 1px #1c4765,0 4px 15px #00304f88,inset 0 0 0 1px #fff8;cursor:pointer}.portrait:disabled{cursor:default}.portrait img{width:100%;height:100%;object-fit:cover;border:1px solid #324959;border-radius:3px}.account h1{font-size:24px;font-weight:400;margin:15px 0 18px}input{font-family:inherit;font-size:14px;padding:6px 8px;border:1px solid #4f6e85;box-shadow:inset 1px 1px 2px #0004;border-radius:3px;outline:0;height:33px;width:250px}input:focus{border-color:#65c6ff;box-shadow:0 0 4px #9addff}#username{margin-bottom:10px;margin-right:36px;width:250px}.passwordrow{display:flex;justify-content:center;align-items:center;gap:7px;width:294px}.passwordrow button{width:34px;height:34px;border:1px solid #b4dff6;border-radius:50%;background:linear-gradient(#c9edff,#4a9ac6 48%,#1a5f99 50%,#53a2d1);color:white;font-size:22px;text-shadow:0 1px 2px #05365c;box-shadow:0 0 0 1px #174b72;cursor:pointer}#hint{font-size:12px;line-height:1.5;margin:10px 25px}#message{font-size:13px;min-height:20px;line-height:1.5}#back{display:inline-block;color:#fff;font-size:12px;margin-top:15px;text-decoration:none}#back:hover{text-decoration:underline}.glassbutton{display:inline-block;color:white;border:1px solid #b5dcf29c;border-radius:3px;background:linear-gradient(#b7d9f24d,#1b52794d);box-shadow:inset 0 0 0 1px #fff1;text-shadow:0 1px 2px #003859;font:13px 'Segoe UI',sans-serif;text-decoration:none;padding:7px 13px;cursor:pointer;margin:4px}.glassbutton:hover{background:#91d4ff55}footer{height:95px;display:flex;justify-content:center;align-items:center;gap:10px;font-size:28px;font-weight:300}footer small{display:block;font-size:12px;text-align:center;letter-spacing:1px}.brandmark{font-size:47px;color:#d1ebff}#pictures{padding:20px;margin-top:22px;width:580px;max-width:100%;background:#063458b3;border:1px solid #96c9e780;border-radius:5px;text-align:center;box-shadow:0 5px 20px #00223a55}#pictures h2{font-size:17px;font-weight:400;margin-top:0}#gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:8px;max-height:230px;overflow:auto;padding:5px;margin-bottom:12px}#gallery button{padding:3px;border:1px solid #fff6;border-radius:3px;background:#fff3;cursor:pointer}#gallery button:hover,#gallery button.selected{background:#b7e6ffbb;border-color:white}#gallery img{width:100%;aspect-ratio:1;object-fit:cover;display:block}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}[hidden]{display:none!important}@media(max-height:650px){.logon{padding:20px 15px;min-height:calc(100vh - 65px)}footer{height:65px}.portrait{width:110px;height:110px}}
+
+/* Compact Windows 7 account tile and credential field. */
+.account{width:300px}
+.portrait{width:96px;height:96px;padding:5px;border-radius:7px;box-shadow:0 0 0 1px #315c74,0 3px 9px #00304f88,inset 0 0 0 1px #fff8}
+.portrait img{border-radius:1px}
+.account h1{font-size:18px;line-height:24px;margin:14px 0 8px}
+#loginform{width:180px;margin:0 auto}
+#loginform input{height:21px;width:180px;border:1px solid #617f91;border-radius:2px;padding:2px 5px;font-size:11px;background:#fff;box-shadow:inset 0 1px 2px #0003,0 0 0 1px #d5f1ff65}
+#loginform input:focus{border-color:#5486a3;box-shadow:inset 0 1px 2px #0002,0 0 3px #b8ebff80}
+#loginform input::placeholder{color:#727272;opacity:1}
+#username{margin:0 0 8px}
+.passwordrow{position:relative;display:block;width:180px;height:21px}
+.passwordrow button{position:absolute;left:186px;top:0;width:21px;height:21px;padding:0;border:1px solid #a2d6f1;box-shadow:0 0 0 1px #386c8b,inset 0 1px 1px #fff8;border-radius:50%;background:linear-gradient(#b9e7fc,#569fc6 48%,#24628c 51%,#67b6db);font-size:0}
+.passwordrow button:before{content:'';position:absolute;left:4px;top:8px;width:9px;height:3px;background:#fff;box-shadow:0 1px #356784}
+.passwordrow button:after{content:'';position:absolute;left:9px;top:5px;width:6px;height:6px;border-top:3px solid #fff;border-right:3px solid #fff;transform:rotate(45deg);filter:drop-shadow(0 1px #356784)}
+.passwordrow button:hover{background:linear-gradient(#d8f4ff,#80c9ec 48%,#377fa8 51%,#83d0ee)}
+.passwordrow button:active{background:linear-gradient(#2c6990,#74b6d5)}
+.passwordrow button:focus-visible{outline:1px dotted white;outline-offset:3px}
+#hint:empty,#message:empty{display:none}
+#hint{margin:12px -35px 0;font-size:11px}
+#message{font-size:12px;margin:12px 0 0}
+#back{margin-top:36px;padding:2px 9px;border:1px solid #8fc0d9;border-radius:3px;background:linear-gradient(#b1dcf080,#316c9980);box-shadow:0 0 0 1px #23567588,inset 0 1px #e8faff55;font-size:11px;line-height:16px;text-decoration:none}
+#back:hover{background:linear-gradient(#d4f1ffaa,#508db9aa)}
+#signedin{margin-top:14px}
+@media(max-height:650px){.portrait{width:96px;height:96px}}
+
+/* Keep the arrow inside its glass button, matching the reference tile. */
+#loginform{width:148px}
+#loginform input{width:148px;height:17px;padding:1px 3px;font-size:10px}
+.passwordrow{width:148px;height:17px}
+.passwordrow button{left:154px;top:-1px;width:19px;height:19px;overflow:hidden}
+.passwordrow button:before{left:4px;top:7px;width:8px;height:3px;box-shadow:0 1px #356784}
+.passwordrow button:after{box-sizing:border-box;left:8px;top:5px;width:6px;height:6px;border-top:2px solid #fff;border-right:2px solid #fff;filter:none;box-shadow:none}
+.account h1{font-size:16px;line-height:22px;margin:14px 0 8px}
+#back{margin-top:40px;font-size:10px;line-height:13px;padding:2px 8px}
+
+/* Native Aero forward icon from B00merang-Artwork/Windows-7, actions/25/forward.png. */
+.passwordrow button,.passwordrow button:hover,.passwordrow button:active{width:25px;height:25px;left:152px;top:-4px;padding:0;border:0;border-radius:0;background:transparent url('/icons/login-submit.png') center/25px 25px no-repeat;box-shadow:none;text-shadow:none;overflow:hidden;font-size:0}
+.passwordrow button:before,.passwordrow button:after{display:none}
+.passwordrow button:hover{filter:brightness(1.12)}
+.passwordrow button:active{filter:brightness(.9)}
+
+/* Align the credential field with the native 25px Aero submit button. */
+#loginform input{height:23px;padding:3px 5px;font-size:12px;line-height:15px;border:1px solid #59778b;border-radius:2px;background:linear-gradient(#f4f6f8 0,#fff 5px);box-shadow:inset 0 1px 2px #50647740,0 0 0 1px #d8f2ff80;color:#222}
+#loginform input:focus{border-color:#3c7296;box-shadow:inset 0 1px 2px #50647735,0 0 0 1px #c5edffb3}
+#loginform input::placeholder{color:#737b82}
+.passwordrow{height:23px}
+.passwordrow button,.passwordrow button:hover,.passwordrow button:active{top:-1px;left:153px}
+
+#accountlist{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:18px 0}.accountchoice{border:1px solid #b2dcf0;background:#356f9e66;color:#fff;border-radius:5px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;max-width:110px}.accountchoice img{width:55px;height:55px;object-fit:cover}.accountchoice span{overflow-wrap:anywhere}#userspanel{padding:20px;margin-top:20px;width:420px;max-width:100%;background:#063458cf;border:1px solid #96c9e780;border-radius:5px}#userspanel h2{font-size:18px;font-weight:400}#userspanel label{display:block;font-size:12px;margin:12px 0}#userspanel input{display:block;width:100%;margin-top:4px}#switchuser{margin-top:20px}

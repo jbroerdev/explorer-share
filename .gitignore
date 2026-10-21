@@ -1,0 +1,10 @@
+data/
+node_modules/
+.reference-icons/
+.asset-cache/
+Explorer/
+.env
+artifacts/
+.env.*
+!.env.example
+*.log

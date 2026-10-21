@@ -1,0 +1,5 @@
+import{parentPort,workerData}from'node:worker_threads';
+import{PHP,loadPHPRuntime,setPhpIniEntries}from'@php-wasm/universal';
+import{getPHPLoaderModule}from'@php-wasm/node-8-4';
+try{const php=new PHP(await loadPHPRuntime(await getPHPLoaderModule()));php.mkdir('/app');await setPhpIniEntries(php,{memory_limit:'64M',max_execution_time:'3',allow_url_fopen:'0',allow_url_include:'0',open_basedir:'/app:/tmp:/internal',disable_functions:'system,exec,shell_exec,passthru,proc_open,popen,pcntl_exec,dl,putenv,getenv,fsockopen,pfsockopen,stream_socket_client,wasm_eval,js_eval'});for(const[name,bytes]of Object.entries(workerData.files)){const parts=name.split('/');let parent='/app';for(const part of parts.slice(0,-1)){parent+='/'+part;if(!php.fileExists(parent))php.mkdir(parent);}php.writeFile('/app/'+name,new Uint8Array(bytes));}php.writeFile('/app/.preview.ini',new TextEncoder().encode(''));const result=await php.run({scriptPath:'/app/'+workerData.script,relativeUri:'/'+workerData.script});const html=result.text;if(html.length>2*1024*1024)throw Error('PHP-Ausgabe ist zu groß.');parentPort.postMessage({html});}catch(e){parentPort.postMessage({error:e.message});}
+

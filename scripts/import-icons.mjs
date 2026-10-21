@@ -1,0 +1,10 @@
+import {execFileSync} from 'node:child_process';
+import {mkdirSync,writeFileSync} from 'node:fs';
+const repo='.reference-icons';
+const files={folder:'filesystems/folder.png',desktop:'filesystems/user-desktop.png',downloads:'filesystems/folder-downloads.png',documents:'filesystems/folder-documents.png',music:'filesystems/folder-music.png',pictures:'filesystems/folder-pictures.png',videos:'filesystems/folder-videos.png',favorites:'filesystems/folder-bookmarks.png',network:'filesystems/network-workgroup.png',computer:'devices/computer.png',drive:'devices/drive-harddisk.png',file:'mimetypes/text-x-generic.png',text:'mimetypes/text-x-generic.png',image:'mimetypes/image-x-generic.png',audio:'mimetypes/audio-x-generic.png',video:'mimetypes/video-x-generic.png',pdf:'mimetypes/application-pdf.png',archive:'mimetypes/package-x-generic.png',iso:'mimetypes/application-x-cd-image.png'};
+const tree=execFileSync('git',['-C',repo,'ls-tree','-r','--name-only','HEAD'],{encoding:'utf8'}).split('\n');
+function read(file,seen=new Set()){if(seen.has(file))throw Error('Icon loop');seen.add(file);const bytes=execFileSync('git',['-C',repo,'show','HEAD:'+file],{maxBuffer:10000000});if(bytes[0]===137&&bytes[1]===80)return bytes;const target=bytes.toString().trim();return read(new URL(target,'file:///'+file).pathname.slice(1),seen);}
+mkdirSync('public/icons',{recursive:true});
+for(const [name,file] of Object.entries(files)){const resolved=tree.includes(file)?file:files.folder;writeFileSync('public/icons/'+name+'.png',read(resolved));const small=file.replace(/^(filesystems|devices|mimetypes)\//,'$1/16/');writeFileSync('public/icons/'+name+'-16.png',read(tree.includes(small)?small:resolved));}
+writeFileSync('public/icons/ATTRIBUTION.md','# Windows 7 icons\n\nSource: https://github.com/B00merang-Artwork/Windows-7\nCommit: '+execFileSync('git',['-C',repo,'rev-parse','HEAD'],{encoding:'utf8'}).trim()+'\nOriginal Win2-7 icon theme, contributors credited in the upstream README.\n');
+console.log('Icons imported');

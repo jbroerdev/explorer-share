@@ -1,0 +1,14 @@
+# Windows 7 icons
+
+Source: https://github.com/B00merang-Artwork/Windows-7
+Commit: b1577ced806262ae0caad89ed183d1d5b0336852
+Original Win2-7 icon theme, contributors credited in the upstream README.
+
+Reference navigation icons and Desktop/Downloads images: https://mirrors.equipable.org/ (Windows 7 imagery).
+
+Windows 7 account pictures: https://archive.org/details/windows-7-user-account-pictures (BMP files converted to PNG, Microsoft Windows imagery).
+Login background: https://github.com/TheJustRun/Dildows-7/blob/main/assets/logon.png (Windows 7 imagery).
+
+Editor toolbar: Notepad++ official repository, PowerEditor/src/icons/standard/toolbar/*.bmp, converted to transparent PNG. Source: https://github.com/notepad-plus-plus/notepad-plus-plus . License: GNU GPL Version 3 with the clarifications and exceptions in NOTEPAD-PLUS-PLUS-LICENSE.txt. The editor's browser engine is CodeMirror (MIT); Notepad++ source code is not embedded as an application.
+
+VLC cone: https://github.com/videolan/vlc/blob/master/share/icons/128x128/vlc.png . VideoLAN VLC, see VLC-COPYING.txt (GNU GPL v2 or later). Browser playback is implemented with HTMLMediaElement; libVLC is not embedded. QA video: MDN CC0 flower sample, https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4 (temporary test asset only).

@@ -1,0 +1,14 @@
+.git
+node_modules
+data
+Explorer
+.reference-icons
+.asset-cache
+artifacts
+.env
+.env.*
+.openai
+*.log
+*.tar
+*.tar.gz
+*.zip

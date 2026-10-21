@@ -1,0 +1,53 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm,writeFile,readFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
+import {zipSync,unzipSync} from 'fflate';
+test('Login, Upload, rekursive Freigabe und Widerruf',async()=>{
+ process.env.NODE_ENV='test';process.env.DATA_DIR=await mkdtemp(path.join(os.tmpdir(),'explorer-test-'));
+ const {server}=await import('./server.mjs');await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;let cookie='';
+ const request=(url,data,logged=true)=>fetch(base+url,{method:data===undefined?'GET':'POST',headers:{...(logged?{cookie}:{}),'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});
+ try{
+ assert.equal((await request('/api/folder',{name:'Verboten'},false)).status,401);
+ const setup=await request('/api/setup',{username:'admin',password:'test-password-12345'});assert.equal(setup.status,200);cookie=setup.headers.get('set-cookie').split(';')[0];
+ await request('/api/folder',{name:'Public'});let data=await(await request('/api/nodes')).json();const folder=data.nodes.find(n=>n.name==='Public');
+ await request('/api/folder',{name:'Child',parent:folder.id});data=await(await request('/api/nodes')).json();const child=data.nodes.find(n=>n.name==='Child');
+ const upload=await fetch(base+'/api/upload?'+new URLSearchParams({parent:child.id,name:'hello.txt'}),{method:'POST',headers:{cookie},body:'Hello world'});assert.equal(upload.status,201);
+ data=await(await request('/api/nodes')).json();const file=data.nodes.find(n=>n.kind==='file');assert.equal((await request('/download/'+file.id,undefined,false)).status,404);
+ await request('/api/share',{id:folder.id,shared:true});const publicData=await(await request('/api/nodes',undefined,false)).json();assert.equal(publicData.nodes.length,9);assert.equal(publicData.nodes.find(n=>n.id===folder.id).parent,'public-downloads');assert.equal(publicData.nodes.find(n=>n.id===folder.id).path,'/C/Users/share/Downloads/Public');assert.ok(publicData.nodes.every(n=>!('shared'in n)&&!('effectiveShared'in n)));assert.equal(await(await request('/download/'+file.id,undefined,false)).text(),'Hello world');
+ await request('/api/share',{id:folder.id,shared:false});assert.equal((await request('/download/'+file.id,undefined,false)).status,404);const emptyPublic=(await(await request('/api/nodes',undefined,false)).json()).nodes;assert.equal(emptyPublic.length,6);assert.ok(emptyPublic.every(n=>n.system));
+ assert.equal((await request('/api/folder',{name:'Noten',space:'documents'})).status,201);
+ assert.equal((await request('/api/folder',{name:'Noten',space:'music'})).status,201);
+ data=await(await request('/api/nodes')).json();const musicFolder=data.nodes.find(n=>n.name==='Noten'&&n.space==='music');assert.ok(musicFolder);
+ assert.equal((await request('/api/folder',{name:'Unterordner',parent:musicFolder.id,space:'downloads'})).status,201);
+ data=await(await request('/api/nodes')).json();assert.equal(data.nodes.find(n=>n.name==='Unterordner').space,'music');
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4i8AAAAASUVORK5CYII=','base64');
+ assert.equal((await fetch(base+'/api/upload?'+new URLSearchParams({name:'Bild.png',space:'pictures'}),{method:'POST',headers:{cookie},body:png})).status,201);
+ data=await(await request('/api/nodes')).json();const picture=data.nodes.find(n=>n.name==='Bild.png');assert.equal(picture.space,'pictures');assert.equal((await request('/preview/'+picture.id,undefined,false)).status,404);
+ await request('/api/share',{id:picture.id,shared:true});const preview=await request('/preview/'+picture.id,undefined,false);assert.equal(preview.status,200);assert.equal(preview.headers.get('content-type'),'image/png');
+ assert.equal((await request('/preview/'+file.id)).status,415);
+ assert.equal((await request('/api/link',{name:'Böse',url:'javascript:alert(1)'})).status,400);
+ assert.equal((await request('/api/link',{name:'Website',url:'https://example.com',space:'documents',customIcon:'data:image/png;base64,'+png.toString('base64')})).status,200);
+ data=await(await request('/api/nodes')).json();const link=data.nodes.find(n=>n.kind==='link');assert.equal(link.space,'documents');assert.equal(link.url,'https://example.com/');assert.ok(!(await(await request('/api/nodes',undefined,false)).json()).nodes.some(n=>n.id===link.id));
+ await request('/api/share',{id:link.id,shared:true});assert.ok((await(await request('/api/nodes',undefined,false)).json()).nodes.some(n=>n.id===link.id));
+ assert.equal((await request('/api/profile',{avatar:'/avatars/user.png'})).status,200);assert.equal((await(await request('/api/session')).json()).avatar,'/avatars/user.png');
+ const avatar=await fetch(base+'/api/avatar',{method:'POST',headers:{cookie},body:png});assert.equal(avatar.status,200);assert.equal((await request('/avatar',undefined,false)).headers.get('content-type'),'image/png');
+ assert.equal((await request('/api/profile',{avatar:'/avatars/../../server.mjs'})).status,400);
+ assert.equal((await request('/login',undefined,false)).status,200);
+ const mediaUpload=await fetch(base+'/api/upload?name=clip.mp4&space=videos',{method:'POST',headers:{cookie},body:Buffer.from('0123456789')});const mediaId=(await mediaUpload.json()).id;assert.equal((await request('/media/'+mediaId,undefined,false)).status,404);await request('/api/share',{id:mediaId,shared:true});const range=await fetch(base+'/media/'+mediaId,{headers:{Range:'bytes=2-5'}});assert.equal(range.status,206);assert.equal(range.headers.get('content-range'),'bytes 2-5/10');assert.equal(await range.text(),'2345');assert.equal((await fetch(base+'/media/'+mediaId,{headers:{Range:'bytes=100-'}})).status,416);assert.equal((await fetch(base+'/media/'+mediaId,{method:'HEAD'})).headers.get('content-length'),'10');assert.equal(await(await fetch(base+'/media/'+mediaId,{headers:{Range:'bytes=-3'}})).text(),'789');await request('/api/share',{id:mediaId,shared:false});assert.equal((await request('/media/'+mediaId,undefined,false)).status,404);
+ const source=await(await request('/api/text?id='+file.id)).json();assert.equal(source.content,'Hello world');assert.equal((await request('/api/text',{id:file.id,content:'Hallo Editor',version:source.version})).status,200);assert.equal((await request('/api/text',{id:file.id,content:'alt',version:source.version})).status,409);
+ const zipped=await request('/api/zip',{id:folder.id});assert.equal(zipped.status,201);const zipId=(await zipped.json()).id;const zipBytes=new Uint8Array(await(await request('/download/'+zipId)).arrayBuffer());assert.equal(new TextDecoder().decode(unzipSync(zipBytes)['Public/Child/hello.txt']),'Hallo Editor');
+ assert.equal((await request('/api/unzip',{id:zipId,name:'Public-entpackt'})).status,201);
+ const bad=zipSync({'../outside.txt':Buffer.from('escape')});const badUpload=await fetch(base+'/api/upload?name=bad.zip',{method:'POST',headers:{cookie},body:bad});const badId=(await badUpload.json()).id;assert.equal((await request('/api/unzip',{id:badId})).status,400);
+ const phpUpload=await fetch(base+'/api/upload?name=index.php&space=documents',{method:'POST',headers:{cookie},body:'<?php echo "<h1>".(6*7)."</h1>";'});const phpId=(await phpUpload.json()).id;const rendered=await request('/site/'+phpId+'/index.php');assert.equal(rendered.status,200);assert.ok((await rendered.text()).includes('<h1>42</h1>'));assert.ok(rendered.headers.get('content-security-policy').includes('sandbox allow-scripts'));
+ assert.equal((await request('/site/'+phpId+'/index.php',undefined,false)).status,404);
+ const info=await(await request('/api/nodes')).json();assert.ok(info.nodes.every(n=>n.path.startsWith('/C/Users/admin/')));assert.ok((await(await request('/api/nodes',undefined,false)).json()).nodes.every(n=>n.path.startsWith('/C/Users/share/')));
+ assert.equal((await request('/api/users',{username:'alice',password:'alice-password-123'})).status,201);const adminCookie=cookie;const second=await request('/api/login',{username:'alice',password:'alice-password-123'});cookie=second.headers.get('set-cookie').split(';')[0];const aliceNodes=(await(await request('/api/nodes')).json()).nodes;assert.equal(aliceNodes.length,6);assert.ok(aliceNodes.every(n=>n.path.startsWith('/C/Users/alice/')));assert.equal((await request('/api/text',{id:file.id,content:'hack',version:source.version})).status,404);assert.equal((await request('/api/folder',{parent:folder.id,name:'hack'})).status,404);assert.equal((await request('/api/users')).status,403);assert.equal((await request('/api/users',{username:'eve',password:'eve-password-123'})).status,403);
+ assert.equal((await request('/api/folder',{parent:'@home',name:'Eigener Ordner'})).status,201);assert.equal((await request('/C/Users/alice/Documents/',undefined,false)).status,200);cookie=adminCookie;
+ await request('/api/logout',{});assert.equal((await request('/api/folder',{name:'No'})).status,401);assert.equal((await request('/api/profile',{avatar:'/avatars/user.png'})).status,401);
+ }finally{await new Promise(r=>server.close(r));await rm(process.env.DATA_DIR,{recursive:true,force:true});}
+});
+test('Migration erhält vorhandene Dateien, Konto und Sicherung',async()=>{const folder=await mkdtemp(path.join(os.tmpdir(),'explorer-migration-'));try{const original={account:{username:'legacy',salt:'salt',password:'00',avatar:'/avatars/user.png'},nodes:[{id:'legacy-file',parent:null,name:'Alt.txt',kind:'file',space:'documents',shared:true}]};await writeFile(path.join(folder,'database.json'),JSON.stringify(original));execFileSync(process.execPath,['--input-type=module','-e',"await import('./backend.mjs')"],{cwd:process.cwd(),env:{...process.env,NODE_ENV:'test',DATA_DIR:folder}});const migrated=JSON.parse(await readFile(path.join(folder,'database.json'),'utf8'));const n=migrated.nodes.find(n=>n.id==='legacy-file');assert.equal(migrated.schema,2);assert.equal(n.owner,migrated.users[0].id);assert.equal(migrated.nodes.find(p=>p.id===n.parent).name,'Documents');assert.equal(n.shared,true);assert.deepEqual(JSON.parse(await readFile(path.join(folder,'database.before-multiuser.json'),'utf8')),original);}finally{await rm(folder,{recursive:true,force:true});}});
+
