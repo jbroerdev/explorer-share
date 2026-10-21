@@ -1,51 +1,212 @@
 # Explorer Share
 
-Datei-Sharing mit Windows-7-Explorer-Oberfläche, am Layout von mirrors.equipable.org orientiert. Eigenständige Node.js-Anwendung mit CodeMirror-Editor im Notepad++-Stil, fflate für ZIP und PHP 8.4 als isolierte WebAssembly-Vorschau. Symbole und Quellen: public/icons/ATTRIBUTION.md.
+Ein Dateimanager im Stil von Windows 7 für deinen eigenen Server. Benutzer können Dateien hochladen, verwalten und öffentlich freigeben. Fotoanzeige, Medienplayer und Texteditor sind enthalten.
 
-## Start
+**Die Anwendung läuft mit Docker Compose.** Docker baut das Image direkt aus diesem Repository. Node.js und pnpm musst du auf deinem Server nicht zusätzlich installieren.
 
-Node.js ab 24.18 installieren, im Projektordner die Abhängigkeiten mit `pnpm install` installieren und `pnpm build` ausführen. Dann `pnpm start` oder `node server.mjs` starten. Das gebaute public/editor.bundle.js liegt bereits bei. Die Anmeldung liegt ausschließlich auf http://localhost:3000/login. Dort beim ersten Aufruf lokal ein Administratorkonto mit mindestens 12 Zeichen Passwort anlegen. Es gibt keine Standard-Zugangsdaten und keinen öffentlichen Login-Knopf.
+## Voraussetzungen
 
-Dateien und Kontodaten liegen dauerhaft in `data/`. Diesen Ordner einschließlich `database.json` zusammen sichern. Eine Instanz pro Datenverzeichnis betreiben. Bestehende Ein-Konto-Datenbanken werden automatisch migriert; die bisherige Datenbank wird vorher als database.before-multiuser.json gesichert. Dateien werden in die echte Struktur unter data/Explorer/Users/<Benutzer>/ übernommen; die alten ID-Dateien bleiben als Sicherung erhalten.
+Du brauchst einen Server mit **Docker, dem Compose-Plugin und Git** sowie Terminal-Zugriff. Zum Anlegen des Datenordners benötigst du `sudo`-Rechte.
 
-## Benutzer und Pfade
+Die folgenden Befehle sind für einen **Linux-Docker-Host** gedacht. Führe sie im Terminal dieses Servers aus.
 
-- Unter Computer → Windows (C:) → Users liegt das eigene Benutzerverzeichnis mit Desktop, Downloads, Documents, Music, Pictures und Videos.
-- Private Pfade: `/C/Users/<Benutzername>/Documents/Ordner/Datei.txt`. Öffentliche Freigaben: `/C/Users/share/Ordner/Datei.txt`. URLs lassen sich direkt öffnen; die Identität wird serverseitig geprüft, ein Benutzername im Pfad erteilt keine Berechtigung.
-- Jede Person sieht und verwaltet nur die eigenen privaten Dateien. Administratoren können auf `/login` über „Benutzer verwalten“ weitere Konten anlegen. Benutzer melden sich mit Benutzername und Passwort an und haben eigene Profilbilder.
-- Neue Dateien und Ordner direkt im Host-Speicher werden ohne Neustart eingelesen; eine offene Ordneransicht aktualisiert sich alle drei Sekunden. Eigene Freigaben werden dabei nicht automatisch gesetzt.
-- Alle neuen Benutzer erhalten eigene Standardordner. Auch im Benutzer-Hauptordner sind neue Dateien und Ordner möglich.
+## Installation
 
-## Nutzung
+### 1. Projekt herunterladen
 
-- Doppelklick öffnet Ordner, Bilder, Text-/Programmierdateien und HTML/PHP-Vorschauen. PNG, JPEG, GIF, WebP und BMP werden unterstützt. Andere Binärdateien werden heruntergeladen. JAR und EXE erhalten eigene klassische Dateisymbole.
-- Bilder öffnen in der Fotoanzeige mit Bildwechsel, Zoom, Verschieben, Drehen der Ansicht, Diashow, Vollbild und Bildinformationen. Drehungen verändern die Originaldatei nicht.
-- Musik und Video öffnen in einem Player im klassischen VLC-Stil: Abspielen/Pause, Stopp, Vor/Zurück, Zeitregler, Lautstärke, Stummschaltung, Geschwindigkeit, Vollbild, Wiederholung, Zufallswiedergabe und Wiedergabeliste aus den sichtbaren Medien desselben Ordners. Videos können lokale WebVTT-Untertitel laden. Streaming unterstützt HTTP-Range und prüft für jede Anfrage die Zugriffsrechte. Die Wiedergabe nutzt die Browser-Codecs; es ist keine libVLC-Engine und keine serverseitige Transkodierung enthalten. Nicht unterstützte Formate können heruntergeladen werden.
-- Desktop, Downloads, Documents, Music, Pictures und Videos sind getrennte Speicherbereiche. Ordner, Uploads und Verknüpfungen werden im geöffneten Bereich bzw. Unterordner angelegt. Vorhandene Einträge ohne Bereich bleiben unter Downloads erhalten.
-- Nach Anmeldung erscheint die Verwaltungsleiste. Die öffentliche Ansicht enthält keinen Menü- oder Login-Knopf. Rechtsklick auf die freie Dateifläche bietet nach Login ebenfalls Verwaltungsaktionen.
-- Nach Login: Upload per Schaltfläche oder Drag-and-drop, Ordner erstellen, Umbenennen, Löschen und Freigeben per Rechtsklick oder „Organisieren“. Auf freier Fläche bietet Rechtsklick auch „Neue Textdatei“.
-- Rechtsklick auf Text- oder Programmierdateien → „Bearbeiten“ öffnet den Editor. Er bietet Syntaxfarben, Zeilennummern, Code-Faltung, Menü- und Symbolleiste, Suchen/Ersetzen, Rückgängig/Wiederholen, Einrückung, Zeilenumbruch und Statusanzeige. Speichern auch mit Strg+S. UTF-8 und UTF-16 LE werden unterstützt; LF/CRLF bleiben erhalten. Limit: 2 MB. Bei konkurrierender Änderung wird ein veralteter Speicherstand abgewiesen.
-- HTML, HTM, PHP und PHTML öffnen als Website in einem sandboxed iframe. Relative CSS-, JS- und Bilddateien desselben Ordnerbaums werden bei passenden Zugriffsrechten geladen. PHP läuft pro Aufruf in einer frischen WebAssembly-Umgebung ohne eingebundenes Host-Dateisystem oder Netzwerk. Keine persistenten PHP-Sitzungen, Datenbanken oder Schreibzugriffe auf die gespeicherten Projektdateien. Limits: 6 Sekunden, 64 MB PHP-Speicher, 100 Projektdateien, 16 MB Projektinhalt, 2 MB Ausgabe. Diese Vorschau ersetzt keinen vollständigen PHP-Webhost.
-- Rechtsklick auf eine Datei oder einen Unterordner → „ZIP erstellen“. Rechtsklick auf ZIP → „Hier entpacken“. Das Archiv bzw. der neue Zielordner liegt neben der Quelldatei. Limits: 1000 Einträge, 64 MB unkomprimierter Inhalt und 32 MB hochgeladenes ZIP zum Entpacken. Unsichere Pfade und Namenskonflikte werden abgewiesen. Entpacken überschreibt keine vorhandenen Dateien und setzt keine eigenen öffentlichen Freigaben.
-- Dateien, Ordner und Internetverknüpfungen können mit Strg+X / Strg+V oder per Rechtsklick ausgeschnitten und eingefügt werden. Ziehen auf einen Ordner verschiebt die Auswahl; mögliche Ziele werden hervorgehoben. Ordner im linken Baum klappen nach kurzem Verweilen auf. Mehrfachauswahl per Ziehrahmen auf freier Fläche, Strg-Klick, Umschalt-Klick oder Strg+A. Namenskonflikte werden ohne Überschreiben abgewiesen; Standardordner können nicht verschoben werden. Eigene Freigaben bleiben erhalten; geerbte Freigaben richten sich nach dem neuen Elternordner.
-- Neue Einträge sind privat. Eine Ordnerfreigabe wirkt rekursiv und auch auf später hinzugefügte Inhalte.
-- Über „Neue Verknüpfung“ Website-Adresse, Namen und optional eigenes Bild als Icon festlegen. Doppelklick öffnet die Website in einem neuen Tab. HTTP/HTTPS-Adressen sind erlaubt, ausführbare URL-Schemata gesperrt. Verknüpfungen können per Rechtsklick bearbeitet und wie Dateien freigegeben werden.
-- Auf `/login` nach Anmeldung „Profilbild ändern“ wählen: originale Windows-7-Kontobilder oder eigenes Bild hochladen. Eigene Bilder werden mittig quadratisch zugeschnitten und als 256-Pixel-PNG gespeichert. Das Profilbild und der Kontoname werden auf der Login-Seite angezeigt.
-- Die Anmeldung bietet dauerhaft Benutzername und Passwort als Eingabefelder. Das Benutzerbild bleibt erhalten und passt sich bei bekannten Kontonamen an. Weitere Konten werden vom Administrator unter `/login` → „Benutzer verwalten“ angelegt.
-- „Freigabe zurücknehmen“ entfernt auch die Freigaben aller enthaltenen Einträge. Einzelne Dateien oder Unterordner lassen sich von einer geerbten Freigabe ausnehmen und später ausdrücklich erneut freigeben.
-- Gäste sehen ausschließlich öffentliche Inhalte. Einzelne Freigaben innerhalb privater Ordner erscheinen im öffentlichen Hauptverzeichnis; private Elternnamen bleiben verborgen. Freigabe-Metadaten und Symbole werden Gästen nicht ausgeliefert.
-- Öffentliche Links benötigen kein Login; Uploads sind immer geschützt. Uploadlimit: 1 GB pro Datei. Bildvorschauen prüfen dieselben Zugriffsrechte wie Downloads.
+```bash
+git clone https://github.com/jbroerdev/explorer-share.git
+cd explorer-share
+```
 
-## Serverbetrieb
+Führe alle weiteren Compose-Befehle in diesem Projektordner aus.
 
-Docker-Anleitung: [DOCKER.md](DOCKER.md). Im Container ist `/Explorer` der Mountpoint und `/Explorer/Users/<Benutzer>/…` die echte Ordnerstruktur. Lokal liegt dieselbe Struktur standardmäßig unter `data/Explorer/Users/…`; `EXPLORER_ROOT` kann diese Speicherwurzel ändern. Die Grundordner werden für alle Benutzer angelegt. Metadaten bleiben im `DATA_DIR`.
+### 2. Datenordner auf dem Server anlegen
 
-Standardmäßig nur auf 127.0.0.1:3000 erreichbar. Für externen Betrieb hinter einem HTTPS-Reverse-Proxy `HOST=0.0.0.0` und `COOKIE_SECURE=1` in der Serverumgebung setzen. `PORT` und `DATA_DIR` sind optional. Der Proxy muss den öffentlichen Host-Header beibehalten; Request-Body-Limit und Timeouts für große Uploads passend einstellen. Ersteinrichtung zuerst lokal erledigen. Sitzungen laufen nach 8 Stunden ab und werden beim Logout sowie Serverneustart ungültig. Ein Serverprozess, lokaler Dateispeicher und atomare Metadaten-Speicherung; kein Clusterbetrieb.
+In dieser Anleitung liegen deine Daten im echten Host-Ordner **`/Explorer`**:
 
-Noch nicht enthalten: Passwortänderung und Kontolöschung in der Oberfläche, Papierkorb, PDF-/Office-Vorschau, Speicherquoten und zeitlich begrenzte Freigaben. Vor produktivem Internetbetrieb sind die konkrete HTTPS-/Proxy-Konfiguration und ein unabhängiger Sicherheitsreview erforderlich.
+```bash
+sudo mkdir -p /Explorer
+sudo chown 1000:1000 /Explorer
+```
 
-## Prüfung
+Der Container läuft mit der Benutzer- und Gruppen-ID `1000:1000`. Dieser Benutzer braucht Schreibrechte auf den Ordner.
 
-`pnpm test` prüft Berechtigungen, Kontentrennung, Upload/Download, Freigaben, Speicherbereiche, Textbearbeitung mit Versionsprüfung, PHP-Ausgabe, ZIP-Rundlauf und Pfadschutz sowie die verlustfreie Migration. `node scripts/qa-server.mjs` startet eine isolierte Oberfläche mit temporären Testdaten auf Port 3001; das produktive Datenverzeichnis bleibt dabei unberührt.
+### 3. Einstellungen anlegen
+
+Kopiere bei der ersten Installation die Vorlage:
+
+```bash
+cp .env.example .env
+```
+
+Öffne die neue Datei `.env` mit einem Texteditor und ersetze ihren Inhalt durch:
+
+```dotenv
+EXPLORER_PATH=/Explorer
+EXPLORER_BIND_ADDRESS=0.0.0.0
+EXPLORER_PORT=3000
+COOKIE_SECURE=0
+```
+
+| Einstellung | Bedeutung |
+| --- | --- |
+| `EXPLORER_PATH` | Ordner auf deinem Server für Dateien und Kontodaten. |
+| `EXPLORER_BIND_ADDRESS` | `0.0.0.0` erlaubt Zugriff über die Server-IP. `127.0.0.1` beschränkt den Zugriff auf den Server selbst. |
+| `EXPLORER_PORT` | Port der Anwendung. Ist `3000` belegt, wähle beispielsweise `8080`. |
+| `COOKIE_SECURE` | Für direkten HTTP-Zugriff `0`; bei Betrieb über HTTPS am Reverse-Proxy `1`. |
+
+### 4. Container bauen und starten
+
+```bash
+docker compose -f compose.yaml -f compose.bind.yaml up --build -d
+```
+
+Beim ersten Start lädt Docker die benötigten Pakete herunter, führt Tests aus und baut das Image. Das kann einige Minuten dauern. `-d` lässt die Anwendung im Hintergrund laufen.
+
+**Verwende beide Compose-Dateien:** Die zweite Datei bindet deinen Host-Ordner `/Explorer` ein. Ohne sie verwendet die Standardkonfiguration ein von Docker verwaltetes Volume. Beim Wechsel zwischen diesen Speicherarten werden vorhandene Daten nicht automatisch kopiert.
+
+### 5. Erstes Administratorkonto anlegen
+
+```bash
+docker compose -f compose.yaml -f compose.bind.yaml exec explorer node scripts/setup-admin.mjs admin
+```
+
+Gib dein gewünschtes Passwort zweimal ein. Die Eingabe wird nicht angezeigt; das ist normal. Das Passwort muss mindestens **12 Zeichen** lang sein. `admin` ist der Benutzername und kann vor der Einrichtung durch einen anderen Namen ersetzt werden.
+
+Es gibt keine voreingestellten Zugangsdaten. Dieser Befehl erstellt nur das erste Administratorkonto. Er wird im Container ausgeführt, weil die Ersteinrichtung auf lokale Verbindungen beschränkt ist.
+
+### 6. Im Browser öffnen
+
+Ersetze `SERVER-IP` durch die IP-Adresse deines Docker-Hosts:
+
+- Öffentliche Dateiansicht: `http://SERVER-IP:3000/`
+- Anmeldung und Kontoverwaltung: `http://SERVER-IP:3000/login`
+
+Hast du den Port geändert, ersetze auch `3000`. Auf demselben Rechner kannst du statt `SERVER-IP` auch `localhost` verwenden.
+
+Die öffentliche Ansicht ist anfangs leer. Melde dich unter `/login` an, um eigene Dateien zu verwalten. In der öffentlichen Ansicht gibt es absichtlich keinen Login-Knopf.
+
+## Wo liegen meine Dateien?
+
+Der Host-Ordner `/Explorer` wird im Container ebenfalls als `/Explorer` eingebunden. Die Web-Festplatte **Windows (C:)** zeigt die Benutzerstruktur:
+
+```text
+/Explorer/
+├── .explorer/          Kontodaten, Freigaben und Profilbilder
+└── Users/
+    └── admin/
+        ├── Desktop/
+        ├── Downloads/
+        ├── Documents/
+        ├── Music/
+        ├── Pictures/
+        └── Videos/
+```
+
+Jeder Benutzer bekommt diese sechs Grundordner automatisch. Beispiel:
+
+| Ansicht | Pfad |
+| --- | --- |
+| Auf deinem Server | `/Explorer/Users/admin/Documents/Projekt/Notiz.txt` |
+| Im privaten Web-Explorer | `/C/Users/admin/Documents/Projekt/Notiz.txt` |
+
+Neue Dateien und Ordner, die du direkt auf dem Host in vorhandenen Benutzerverzeichnissen anlegst, erscheinen normalerweise innerhalb weniger Sekunden im Web. Ein Container-Neustart ist nicht nötig. Sie müssen für den Container-Benutzer lesbar und für Bearbeitungen beschreibbar sein. Umbenennen und Löschen vorhandener Einträge solltest du über den Web-Explorer erledigen.
+
+Ein neuer Host-Ordner unter `Users` erstellt **kein Benutzerkonto**. Lege Konten über die Anwendung an.
+
+## Benutzer und Freigaben
+
+### Weitere Benutzer anlegen
+
+Melde dich als Administrator unter `/login` an und öffne **„Benutzer verwalten“**. Jeder Benutzer verwaltet seine eigenen privaten Dateien. Profilbilder lassen sich ebenfalls auf der Login-Seite ändern.
+
+### Dateien öffentlich freigeben
+
+1. Melde dich an und öffne den gewünschten Ordner.
+2. Klicke mit der rechten Maustaste auf eine Datei oder einen Ordner.
+3. Wähle **„Freigeben …“**, aktiviere die öffentliche Freigabe und speichere.
+4. Kopiere den angezeigten öffentlichen Link.
+
+Eine Ordnerfreigabe gilt auch für enthaltene und später hinzugefügte Dateien und Unterordner – einschließlich neuer Dateien vom Host. Mit **„Freigabe zurücknehmen“** kannst du einzelne Einträge davon ausnehmen. Bei einem Ordner werden dabei auch die Freigaben seiner enthaltenen Einträge zurückgenommen.
+
+Die öffentliche Ansicht liegt unter `/C/Users/share/…` und zeigt nur freigegebene Inhalte. `share` ist eine gemeinsame Ansicht, kein zweiter Speicherordner. Neue Einträge erhalten keine eigene Freigabe; eine bestehende Ordnerfreigabe können sie erben.
+
+## Dateien im Web-Explorer verwalten
+
+| Aktion | So geht es |
+| --- | --- |
+| Öffnen | Doppelklick auf eine Datei oder einen Ordner. |
+| Hochladen | Nach dem Login „Hochladen“ wählen oder Dateien vom eigenen Rechner in die Dateifläche ziehen. |
+| Neuer Ordner oder neue Verknüpfung | Rechtsklick auf eine freie Stelle. Verknüpfungen können ein eigenes Icon bekommen. |
+| Mehrere Einträge auswählen | Ziehrahmen auf freier Fläche, Strg-Klick, Umschalt-Klick oder Strg+A. |
+| Verschieben | Strg+X zum Ausschneiden, Zielordner öffnen und Strg+V zum Einfügen. Alternativ auf einen Zielordner ziehen. |
+| Umbenennen oder Löschen | Rechtsklick auf den Eintrag; Löschen auch mit Entf und Bestätigung. Es gibt keinen Papierkorb. |
+| ZIP erstellen oder entpacken | Rechtsklick auf Datei, Ordner oder ZIP-Archiv. |
+| Text oder Programmcode bearbeiten | Rechtsklick → „Bearbeiten“, speichern mit Strg+S. |
+
+Bilder öffnen in der Fotoanzeige mit Zoom, Drehen, Bildwechsel und Diashow. Musik und Videos öffnen im Medienplayer; unterstützte Formate hängen von den Codecs des Browsers ab. HTML und PHP öffnen als isolierte Website-Vorschau. Die PHP-Vorschau ersetzt keinen vollständigen Webhost mit Datenbank oder dauerhaften Sitzungen.
+
+Beim Verschieben bleiben eigene Freigaben erhalten; geerbte Freigaben richten sich nach dem neuen Elternordner. Namenskonflikte werden ohne Überschreiben abgewiesen. Die sechs Grundordner können nicht verschoben werden.
+
+## Updates installieren
+
+Wechsle im Terminal in deinen bestehenden Projektordner:
+
+```bash
+git pull --ff-only
+docker compose -f compose.yaml -f compose.bind.yaml up --build -d
+```
+
+Deine `.env` und der Datenordner `/Explorer` bleiben erhalten. Das Administratorkonto wird nicht erneut angelegt. Nach einem Neustart melden sich Benutzer erneut an. Lade bereits geöffnete Browserseiten neu.
+
+## Datensicherung
+
+Sichere **den vollständigen Ordner `/Explorer`**, einschließlich des versteckten Unterordners `.explorer`. Nur `Users` zu sichern reicht nicht aus, um auch Benutzerkonten und Freigaben wiederherzustellen.
+
+Stoppe die Anwendung für eine konsistente Sicherung kurz. Währenddessen sollten auch keine anderen Programme in den Host-Ordner schreiben:
+
+```bash
+docker compose -f compose.yaml -f compose.bind.yaml stop
+sudo tar -czf "$HOME/explorer-backup.tar.gz" -C / Explorer
+docker compose -f compose.yaml -f compose.bind.yaml up -d
+```
+
+Die Sicherung liegt danach als `explorer-backup.tar.gz` in deinem Home-Verzeichnis. Dieser Beispielname wird bei der nächsten Sicherung überschrieben; verwende für mehrere Sicherungen unterschiedliche Namen. Bewahre die Sicherung auch außerhalb des Servers auf. Sie enthält neben Dateien auch Kontodaten und Freigaben.
+
+## Status, Logs und häufige Probleme
+
+Status anzeigen:
+
+```bash
+docker compose -f compose.yaml -f compose.bind.yaml ps
+```
+
+Letzte Meldungen anzeigen:
+
+```bash
+docker compose -f compose.yaml -f compose.bind.yaml logs --tail=100 explorer
+```
+
+| Problem | Was du prüfen solltest |
+| --- | --- |
+| Die Seite ist nicht erreichbar. | Läuft der Container? Stimmen Server-IP und Port? Steht `EXPLORER_BIND_ADDRESS=0.0.0.0` in `.env`? Erlaubt die Host-Firewall den Zugriff? |
+| Port 3000 ist belegt. | Ändere `EXPLORER_PORT` in `.env` und starte den Compose-Befehl erneut. |
+| Dateien erscheinen nicht unter `/Explorer` auf dem Host. | Wurde mit **beiden** Compose-Dateien gestartet und ist `EXPLORER_PATH=/Explorer` gesetzt? |
+| Schreiben oder Hochladen schlägt fehl. | Prüfe freien Speicher und Schreibrechte für UID/GID `1000:1000`. |
+| Gäste sehen keine Dateien. | Neue Dateien sind privat, solange weder sie selbst noch ihr Elternordner freigegeben sind. |
+| Das Administratorkonto existiert bereits. | Melde dich mit dem vorhandenen Konto an; der Einrichtungsbefehl ist nur für das erste Konto. |
+
+## Eigene Domain und HTTPS
+
+Für öffentlichen Betrieb mit eigener Domain verwende einen HTTPS-Reverse-Proxy vor dem Container. Setze dafür `COOKIE_SECURE=1` in `.env` und führe den Compose-Startbefehl erneut aus. Läuft der Proxy auf demselben Host, kann die Portbindung auf `127.0.0.1` beschränkt werden. Die direkte Verbindung zu Port 3000 bietet selbst kein HTTPS.
+
+## Weitere Informationen
+
+- [Docker-Details und Übernahme vorhandener Daten](DOCKER.md)
+- [Automatische Docker-Builds und Tests](https://github.com/jbroerdev/explorer-share/actions)
+- [Quellen und Lizenzhinweise zu den Grafiken](public/icons/ATTRIBUTION.md)
+
+Die Oberfläche orientiert sich am Windows-7-Explorer und an [mirrors.equipable.org](https://mirrors.equipable.org/). Textbearbeitung nutzt CodeMirror, ZIP-Verarbeitung fflate und die PHP-Vorschau eine isolierte WebAssembly-Laufzeit.
 
 
