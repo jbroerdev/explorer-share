@@ -1,5 +1,7 @@
 # Windows 7 icons
 
+Taskbar texture and Start button sprite: https://github.com/EJSnow/Windows-7-skin (Taskbar_texture_bottom.png and Windows 7 start button 100%.png). Windows 7 lookalike artwork for Open-Shell; original sources and contributors are documented in the upstream README. These are visual assets; Open-Shell code is not embedded.
+
 Source: https://github.com/B00merang-Artwork/Windows-7
 Commit: b1577ced806262ae0caad89ed183d1d5b0336852
 Original Win2-7 icon theme, contributors credited in the upstream README.
