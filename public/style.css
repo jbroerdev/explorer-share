@@ -115,3 +115,9 @@
 #viewer.photo-fullscreen{position:fixed;inset:0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;margin:0;border:0;border-radius:0}
 #photowindow:fullscreen .photo-title,#viewer.photo-fullscreen .photo-title{display:none}
 #photowindow:fullscreen #photostage,#viewer.photo-fullscreen #photostage{background:#070b12}
+
+.selection-box{position:absolute;z-index:8;border:1px solid #3399ff;background:#3399ff30;pointer-events:none;min-width:0;min-height:0}
+.selecting-files,.selecting-files *{user-select:none!important;cursor:default!important}
+.item.cut .icon,.item.cut .item-name{opacity:.45}
+.item.drop-target,.tree-row.drop-target{border-color:#69a7e2!important;background:linear-gradient(#e5f4ff,#bcdcf8)!important;box-shadow:inset 0 0 0 1px #fff,0 0 3px #5a9fdd}
+.item[draggable=true]{-webkit-user-drag:element}

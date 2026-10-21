@@ -93,6 +93,38 @@ await api('/api/delete',{id:ownFile});
 await assert.rejects(stat(path.join(process.env.EXPLORER_ROOT,'Users','alice','Documents','Loeschen','Eigen.txt')),{code:'ENOENT'});
 await api('/api/delete',{id:ownFolder});
 await assert.rejects(stat(path.join(process.env.EXPLORER_ROOT,'Users','alice','Documents','Loeschen')),{code:'ENOENT'});
+
+// Move folders, files and virtual links together while preserving IDs and ownership.
+const musicId=(await api('/api/nodes')).result.nodes.find(n=>n.system&&n.space==='music').id;
+const docsId=(await api('/api/nodes')).result.nodes.find(n=>n.system&&n.space==='documents').id;
+const movingFolder=(await api('/api/folder',{name:'Verschieben',space:'documents'})).result.id;
+const movingFile=(await api('/api/new-text',{name:'Quelle.txt',parent:movingFolder})).result.id;
+await api('/api/link',{name:'Move-Link',url:'https://example.com',space:'documents'});
+const movingLink=(await api('/api/nodes')).result.nodes.find(n=>n.name==='Move-Link').id;
+await api('/api/share',{id:musicId,shared:true});
+const moved=await api('/api/move',{ids:[movingFolder,movingFile,movingLink],parent:musicId});assert.equal(moved.result.moved,2);
+assert.ok((await stat(path.join(process.env.EXPLORER_ROOT,'Users','alice','Music','Verschieben','Quelle.txt'))).isFile());
+await assert.rejects(stat(path.join(process.env.EXPLORER_ROOT,'Users','alice','Documents','Verschieben')),{code:'ENOENT'});
+let movedNodes=(await api('/api/nodes')).result.nodes;
+assert.equal(movedNodes.find(n=>n.id===movingFile).path,'/C/Users/alice/Music/Verschieben/Quelle.txt');
+assert.equal(movedNodes.find(n=>n.id===movingLink).parent,musicId);
+assert.equal(movedNodes.find(n=>n.id===movingFile).effectiveShared,true);
+async function rejectedMove(ids,parent,status){const r=await fetch(origin+'/api/move',{method:'POST',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify({ids,parent})});assert.equal(r.status,status);}
+await rejectedMove([musicId],docsId,400);
+await rejectedMove([movingFolder],movingFolder,400);
+const nested=(await api('/api/folder',{name:'Tiefer',parent:movingFolder})).result.id;
+await rejectedMove([movingFolder],nested,400);
+await rejectedMove([movingFolder],folder,404);
+await rejectedMove([folder],docsId,404);
+await api('/api/new-text',{name:'Move-Link',space:'documents'});
+await rejectedMove([movingFolder,movingLink],docsId,409);
+assert.equal((await api('/api/nodes')).result.nodes.find(n=>n.id===movingFolder).parent,musicId);
+assert.ok((await stat(path.join(process.env.EXPLORER_ROOT,'Users','alice','Music','Verschieben'))).isDirectory());
+await api('/api/move',{ids:[movingFolder],parent:'@home'});
+movedNodes=(await api('/api/nodes')).result.nodes;
+assert.equal(movedNodes.find(n=>n.id===movingFile).effectiveShared,false);
+assert.equal(movedNodes.find(n=>n.id===movingFile).path,'/C/Users/alice/Verschieben/Quelle.txt');
+assert.equal((await api('/api/move',{ids:[movingFolder],parent:'@home'})).result.moved,0);
 cookie=adminCookie;await api('/api/share',{id:folder,shared:true});await api('/api/delete',{id:folder});
 await assert.rejects(stat(path.join(process.env.EXPLORER_ROOT,'Users','admin','Documents','Neuer Name')),{code:'ENOENT'});
 assert.equal((await fetch(origin+'/download/'+file)).status,404);
