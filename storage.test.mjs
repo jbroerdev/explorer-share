@@ -52,7 +52,40 @@ const login=await api('/api/login',{username:'alice',password:'volume-alice-pass
 cookie=login.response.headers.get('set-cookie').split(';')[0];
 let denied=await fetch(origin+'/api/delete',{method:'POST',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify({id:folder})});assert.equal(denied.status,404);
 const aliceNodes=(await api('/api/nodes')).result.nodes;
+const hostFolder=path.join(process.env.EXPLORER_ROOT,'Users','alice','Documents','Vom Host','Unterordner');
+await mkdir(hostFolder,{recursive:true});await writeFile(path.join(hostFolder,'Notiz.txt'),'Host-Inhalt');
+await new Promise(resolve=>setTimeout(resolve,2100));
+let discovered=(await api('/api/nodes')).result.nodes;
+const imported=discovered.find(n=>n.name==='Notiz.txt');assert.ok(imported);
+assert.equal(discovered.find(n=>n.id===imported.parent).name,'Unterordner');
+assert.equal(imported.path,'/C/Users/alice/Documents/Vom%20Host/Unterordner/Notiz.txt');
+assert.equal(imported.shared,false);assert.equal(imported.effectiveShared,false);
+assert.equal((await fetch(origin+'/download/'+imported.id)).status,404);
+assert.equal(await(await fetch(origin+'/download/'+imported.id,{headers:{cookie}})).text(),'Host-Inhalt');
+assert.ok(!(await(await fetch(origin+'/api/nodes',{headers:{cookie:adminCookie}})).json()).nodes.some(n=>n.id===imported.id));
+await api('/api/share',{id:discovered.find(n=>n.name==='Vom Host').id,shared:true});
+await writeFile(path.join(hostFolder,'Später.txt'),'Nachträglich');
+await writeFile(path.join(hostFolder,'Notiz.txt'),'Aktualisierter Host-Inhalt');
+await new Promise(resolve=>setTimeout(resolve,2100));
+const publicList=(await(await fetch(origin+'/api/nodes')).json()).nodes;
+assert.ok(publicList.some(n=>n.name==='Später.txt'));
+discovered=(await api('/api/nodes')).result.nodes;
+assert.equal(discovered.find(n=>n.id===imported.id).size,Buffer.byteLength('Aktualisierter Host-Inhalt'));
+assert.equal(discovered.find(n=>n.name==='Später.txt').shared,false);
+assert.equal(discovered.find(n=>n.name==='Später.txt').effectiveShared,true);
+
 denied=await fetch(origin+'/api/delete',{method:'POST',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify({id:aliceNodes.find(n=>n.system).id})});assert.equal(denied.status,400);
+// A listing during a streamed upload must not import the unfinished file.
+let uploadController;
+const streamingBody=new ReadableStream({start(controller){uploadController=controller;controller.enqueue(Buffer.from('Beginn'));}});
+const streamingUpload=fetch(origin+'/api/upload?name=Laufend.txt&space=documents',{method:'POST',headers:{cookie},body:streamingBody,duplex:'half'});
+const streamingPath=path.join(process.env.EXPLORER_ROOT,'Users','alice','Documents','Laufend.txt');
+for(let attempt=0;attempt<100;attempt++){try{await stat(streamingPath);break;}catch{await new Promise(resolve=>setTimeout(resolve,10));}}
+await new Promise(resolve=>setTimeout(resolve,2100));
+assert.ok(!(await api('/api/nodes')).result.nodes.some(n=>n.name==='Laufend.txt'));
+uploadController.enqueue(Buffer.from(' Ende'));uploadController.close();
+assert.equal((await streamingUpload).status,201);
+assert.equal((await api('/api/nodes')).result.nodes.filter(n=>n.name==='Laufend.txt').length,1);
 const ownFolder=(await api('/api/folder',{name:'Loeschen',space:'documents'})).result.id;
 const ownUpload=await fetch(origin+'/api/upload?'+new URLSearchParams({name:'Eigen.txt',parent:ownFolder}),{method:'POST',headers:{cookie},body:'Test'});assert.equal(ownUpload.status,201);
 const ownFile=(await ownUpload.json()).id;

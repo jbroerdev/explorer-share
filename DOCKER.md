@@ -48,7 +48,7 @@ Jeder neu angelegte Benutzer bekommt dieselben Grundordner. Benutzername, Ordner
 
 `/C/Users/share/…` ist die gemeinsame öffentliche Ansicht der freigegebenen Inhalte. Sie dupliziert keine Dateien und legt keinen zweiten physischen `share`-Benutzer an. Freigaben und Internetverknüpfungen werden in der Datenbank verwaltet; Internetverknüpfungen sind keine regulären hochgeladenen Dateien.
 
-Beim Start werden zusätzliche Dateien innerhalb vorhandener Benutzerordner eingelesen. Dafür den Container nach Änderungen direkt am Volume neu starten. Änderungen außerhalb der Anwendung nur bei gestopptem Container durchführen; Konten werden nicht automatisch aus beliebigen Verzeichnisnamen erstellt. Neue Einträge haben keine eigene Freigabe, können aber eine Freigabe ihres Elternordners erben. Symbolische Links werden nicht verfolgt.
+Neue Dateien und Ordner innerhalb vorhandener Benutzerordner werden auch während des Betriebs automatisch eingelesen. Die offene Webansicht prüft alle drei Sekunden auf Änderungen; ein Container-Neustart ist nicht nötig. Dateigrößen werden ebenfalls aktualisiert. Während Schreibvorgängen der Anwendung wird die Erkennung ausgesetzt, damit laufende Uploads nicht doppelt importiert werden. Konten werden nicht automatisch aus beliebigen Verzeichnisnamen erstellt. Umbenennen und Löschen vorhandener Einträge weiterhin über die Weboberfläche durchführen. Neue Einträge haben keine eigene Freigabe, können aber eine Freigabe ihres Elternordners erben. Symbolische Links werden nicht verfolgt. Host-Dateien müssen für den Container-Benutzer (UID/GID 1000:1000) lesbar und für Bearbeitungen beschreibbar sein.
 
 ## Eigenen Host-Ordner einbinden
 

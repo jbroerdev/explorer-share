@@ -13,6 +13,7 @@ Dateien und Kontodaten liegen dauerhaft in `data/`. Diesen Ordner einschließlic
 - Unter Computer → Windows (C:) → Users liegt das eigene Benutzerverzeichnis mit Desktop, Downloads, Documents, Music, Pictures und Videos.
 - Private Pfade: `/C/Users/<Benutzername>/Documents/Ordner/Datei.txt`. Öffentliche Freigaben: `/C/Users/share/Ordner/Datei.txt`. URLs lassen sich direkt öffnen; die Identität wird serverseitig geprüft, ein Benutzername im Pfad erteilt keine Berechtigung.
 - Jede Person sieht und verwaltet nur die eigenen privaten Dateien. Administratoren können auf `/login` über „Benutzer verwalten“ weitere Konten anlegen. Benutzer melden sich mit Benutzername und Passwort an und haben eigene Profilbilder.
+- Neue Dateien und Ordner direkt im Host-Speicher werden ohne Neustart eingelesen; eine offene Ordneransicht aktualisiert sich alle drei Sekunden. Eigene Freigaben werden dabei nicht automatisch gesetzt.
 - Alle neuen Benutzer erhalten eigene Standardordner. Auch im Benutzer-Hauptordner sind neue Dateien und Ordner möglich.
 
 ## Nutzung

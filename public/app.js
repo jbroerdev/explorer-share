@@ -131,3 +131,19 @@ $('photostage').addEventListener('pointermove',e=>{if(!photoDrag)return;photoX=p
 for(const type of ['pointerup','pointercancel','lostpointercapture'])$('photostage').addEventListener(type,()=>{photoDrag=null;$('photostage').classList.remove('dragging');});
 $('viewer').addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.closest('button,a'))return;if(e.key==='ArrowLeft'){e.preventDefault();photoStep(-1);}if(e.key==='ArrowRight'){e.preventDefault();photoStep(1);}if(e.key==='+'||e.key==='='){e.preventDefault();zoomPhoto(1.25);}if(e.key==='-'){e.preventDefault();zoomPhoto(.8);}if(e.code==='Space'){e.preventDefault();toggleSlideshow();}if(e.key==='0')$('photofit').click();});
 new ResizeObserver(()=>{if($('viewer').open)layoutPhoto();}).observe($('photostage'));
+
+let refreshingListing=false;
+async function refreshListing(){
+if(refreshingListing||document.hidden||!state.home||document.querySelector('dialog[open]')||!$('context').hidden)return;
+refreshingListing=true;const previous=nodes;
+try{
+const session=await api('/api/session');if(session.userId!==state.userId){await load();return;}
+const result=await api('/api/nodes'+(state.readonly?'?public=1':''));
+if(previous!==nodes||document.querySelector('dialog[open]')||!$('context').hidden)return;
+const next=result.nodes.map(n=>({...n,parent:n.parent||'@home'}));
+if(JSON.stringify(next)!==JSON.stringify(nodes)){nodes=next;if(selected&&!nodes.some(n=>n.id===selected))selected=null;render();}
+}catch{/* Keep the current view during temporary connection failures. */}
+finally{refreshingListing=false;}
+}
+setInterval(refreshListing,3000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshListing();});
