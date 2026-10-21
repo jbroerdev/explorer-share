@@ -210,6 +210,7 @@ dialog.desktop-window .desktop-titlebar>button.window-close{border-color:#8a4e3d
 .desktop-surface{position:absolute;inset:0 0 42px;display:flex;flex-flow:column wrap;align-content:flex-start;gap:12px;padding:18px 12px}
 .desktop-icon{width:86px;height:86px;border:1px solid transparent;border-radius:3px;background:transparent;color:white;text-shadow:1px 1px 3px #000;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
 .desktop-icon:hover,.desktop-icon:focus{border-color:#d6eeff99;background:#b6deff33;outline:0}.desktop-icon img{width:48px;height:48px;object-fit:contain}
+.desktop-icon:first-child img{content:url('/icons/computer-16.png')}
 dialog.explorer-window{width:min(1100px,85vw);height:min(740px,82vh)}
 .explorer-window>main.window{flex:1;min-height:0;width:100%;height:auto;overflow:hidden}.explorer-window #commands{flex-wrap:wrap;height:auto;min-height:31px;overflow:visible}.explorer-window .workspace{min-height:0}.explorer-window footer{display:flex}
 .desktop-shell #desktop-taskbar{height:42px;padding:3px 136px 3px 62px;gap:5px;backdrop-filter:blur(14px);background:linear-gradient(#c5e6fb99,#477eaaad 48%,#286697bd 50%,#7ca5c7bb);border-top:1px solid #cceaff;box-shadow:0 -1px 0 #3b658a}
